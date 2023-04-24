@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
-    "strconv"
 )
 
 type Span struct {
@@ -44,36 +44,43 @@ type TraceData struct {
 }
 
 type Config struct {
-    query string
-    tracePath string
-    verbosity int
-    depthLimit int
+	query      string
+	tracePath  string
+	verbosity  int
+	depthLimit int
 }
+
+var rVerboseFlag = regexp.MustCompile("^-(?P<verbosity>(v{1,2}))$")
+var rDepthPattern = regexp.MustCompile("--depth=(?P<depth>([1-9][0-9]*|0))")
 
 // Prints traces recursively with increasing ident levels.
 // More data is printed until there are no more traces available
 // i.e. until the ChildrenIds key yields an empty array.
 func recursivelyPrintTraces(idToSpanMap map[string]Span, current string, config Config, depth int) {
-    if depth > config.depthLimit { return }
+	if depth > config.depthLimit {
+		return
+	}
 
-    currentSpan := idToSpanMap[current]
+	currentSpan := idToSpanMap[current]
 	prefix := strings.Repeat(" ", depth)
 
 	log.Println(fmt.Sprintf("%s\033[35m[%s]\033[0m: %fms", prefix, currentSpan.Name, currentSpan.Duration*1000))
 
-    if config.verbosity > 0 {
-        log.Println(fmt.Sprintf("%s \033[36m> %s\033[0m", prefix, currentSpan.Resource))
-    }
+	if config.verbosity > 0 {
+		log.Println(fmt.Sprintf("%s \033[36m> %s\033[0m", prefix, currentSpan.Resource))
+	}
 
-    if config.verbosity > 1 {
-        meta, err := json.MarshalIndent(currentSpan.Meta, "", "  ")
+	if config.verbosity > 1 {
+		meta, err := json.MarshalIndent(currentSpan.Meta, "", "  ")
 
-        if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 
-        log.Println(fmt.Sprintf("%s %s", prefix, meta))
-    }
+		log.Println(fmt.Sprintf("%s %s", prefix, meta))
+	}
 
-    for _, childId := range currentSpan.ChildrenIds {
+	for _, childId := range currentSpan.ChildrenIds {
 		recursivelyPrintTraces(idToSpanMap, childId, config, depth+1)
 	}
 }
@@ -123,53 +130,46 @@ func parseTraceJsonFromFile(path string) TraceData {
 	return fullTrace
 }
 
+// Parses command-line arguments to extract flags and
+// other useful contextual details.
 func parseArgs(args []string) Config {
-    collectedArgs := map[string]bool{}
+	rootOfInterest := os.Args[2]
+	tracePath := os.Args[1]
+	verbosity := 0
+	depth := 9999
 
-    for _, arg := range os.Args {
-        collectedArgs[arg] = true
-    }
+	for _, arg := range os.Args {
+		verbosity_match := rVerboseFlag.FindAllString(arg, -1)
 
-    verbosity := 0
+		if verbosity_match != nil {
+			verbosity = len(verbosity_match[0])
+			continue
+		}
 
-    _, verbose := collectedArgs["-v"]
+		depthMatch := rDepthPattern.FindStringSubmatch(strings.Join(os.Args, " "))
 
-    if verbose { verbosity = 1 }
+		if depthMatch != nil {
+			depthValueIndex := rDepthPattern.SubexpIndex("depth")
 
-    _, veryVerbose := collectedArgs["-vv"]
+			depthValue := depthMatch[depthValueIndex]
 
-    if veryVerbose { verbosity = 2 }
+			depthLimit, err := strconv.Atoi(depthValue)
 
-    depthPattern := "--depth=(?P<depth>([1-9][0-9]*|0))"
-    rDepthPattern := regexp.MustCompile(depthPattern)
+			if err != nil {
+				log.Println("Couldn't parse depth limit, ignoring")
+			}
 
-    depthMatch := rDepthPattern.FindStringSubmatch(strings.Join(os.Args, " "))
-    
-    depth := 9999
+			depth = depthLimit
+			continue
+		}
+	}
 
-    if depthMatch != nil {
-        depthValueIndex := rDepthPattern.SubexpIndex("depth")
-
-        depthValue := depthMatch[depthValueIndex]
-
-        depthLimit, err := strconv.Atoi(depthValue)
-        
-        if err != nil {
-            log.Println("Couldn't parse depth limit, ignoring")
-        }
-
-        depth = depthLimit
-    }
-
-    rootOfInterest := os.Args[2]
-    tracePath := os.Args[1]
-
-    return Config{ rootOfInterest, tracePath, verbosity, depth }
+	return Config{rootOfInterest, tracePath, verbosity, depth}
 }
 
 func main() {
-    config := parseArgs(os.Args)
-    
+	config := parseArgs(os.Args)
+
 	fullTrace := parseTraceJsonFromFile(config.tracePath)
 
 	spansById, spanIdsByResourceName := buildSpanIndexes(fullTrace)

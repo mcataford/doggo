@@ -138,11 +138,12 @@ func parseArgs(args []string) Config {
 	verbosity := 0
 	depth := 9999
 
+	verbosityMatchIndex := rVerboseFlag.SubexpIndex("verbosity")
 	for _, arg := range os.Args {
-		verbosity_match := rVerboseFlag.FindAllString(arg, -1)
+		verbosity_match := rVerboseFlag.FindAllStringSubmatch(arg, -1)
 
 		if verbosity_match != nil {
-			verbosity = len(verbosity_match[0])
+			verbosity = len(verbosity_match[0][verbosityMatchIndex])
 			continue
 		}
 

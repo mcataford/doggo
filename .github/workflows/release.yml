@@ -6,7 +6,7 @@ on:
     #    - 'v*'
 
 jobs:
-  release:
+  build-releases:
     name: Build release artifacts
     runs-on: ubuntu-latest
     strategy:
@@ -33,3 +33,16 @@ jobs:
       with:
         name: doggo-${{ matrix.os }}-${{ matrix.arch }}
         path: ./doggo
+  publish:
+    name: Publish release
+    runs-on: ubuntu-latest
+    needs: build-releases
+    steps:
+    - name: Retrieve artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: release-builds
+    - name: Publish release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release-builds/*

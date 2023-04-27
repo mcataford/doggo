@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var Version string
+
 type Span struct {
 	OrgId           int                `json:"org_id"`
 	TraceId         string             `json:"trace_id"`
@@ -177,6 +179,7 @@ func parseArgs(args []string) Config {
 }
 
 func main() {
+	log.Println("Doggo version: ", Version)
 	config := parseArgs(os.Args)
 
 	fullTrace := parseTraceJsonFromFile(config.tracePath)

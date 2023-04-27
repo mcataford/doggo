@@ -51,12 +51,11 @@ jobs:
       run: |
         pwd
         ls -R
-        mv ./release-builds/doggo-darwin-amd64/doggo ./release-builds/doggo-darwin-amd64
-        mv ./release-builds/doggo-linux-amd64/doggo ./release-builds/doggo-linux-amd64
+        tar -czvf ./release-builds/doggo-darwin-amd64.tar.gz ./release-builds/doggo-darwin-amd64/doggo
+        tar -czvf ./release-builds/doggo-linux-amd64.tar.gz ./release-builds/doggo-linux-amd64/doggo
     - name: Publish release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./release-builds/doggo-darwin-amd64
-          ./release-builds/doggo-linux-amd64
+          ./release-builds/*.tar.gz
         tag_name: v0.0.2

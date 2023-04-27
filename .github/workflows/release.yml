@@ -48,5 +48,7 @@ jobs:
     - name: Publish release
       uses: softprops/action-gh-release@v1
       with:
-        files: release-builds/*
+        files: |
+          release-builds/doggo-darwin-amd64.zip
+          release-builds/doggo-linux-amd64.zip
         tag_name: v0.0.2

@@ -10,6 +10,16 @@ This is an attempt at solving that problem: using `doggo`, you can inspect large
 corresponding to spans of interest in a few keystrokes without having to worry about your browser running out of memory.
 At present, you will have to have the json you want to inspect handy -- the tool simply makes it more palatable.
 
+## Installation
+
+### Pre-built binaries
+
+Each release includes pre-built binaries, drop those in your path (i.e. in `/usr/local/bin`) and you are ready to go!
+
+### Building your own
+
+You can also clone this repository and `go build .` to get your own executable.
+
 ## Usage
 
 To get `doggo` on your machine, you can grab a [pre-compiled release](https://github.com/mcataford/doggo/releases) for your machine if one is available or build it locally by cloning the repository and running `go build`.

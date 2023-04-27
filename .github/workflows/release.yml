@@ -19,13 +19,17 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '1.19.0'
+    - name: get tag
+      id: get_tag
+      run: echo ::set-output name=tag::${GITHUB_REF#refs/*/v}
     - name: Build for arch
       env:
         GOOS: ${{ matrix.os }}
         GOARCH: ${{ matrix.arch }}
-      run: go build
+        VERSION: ${{ steps.get_tag.outputs.tag }}
+      run: go build -ldflags "-X main.Version=$VERSION"
     - name: Stash
       uses: actions/upload-artifact@v3
       with:
-        name: build-${{ matrix.os }}-${{ matrix.arch }}
+        name: doggo-${{ matrix.os }}-${{ matrix.arch }}
         path: ./doggo

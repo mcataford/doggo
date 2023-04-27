@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var Version string
+
 type Span struct {
 	OrgId           int                `json:"org_id"`
 	TraceId         string             `json:"trace_id"`

@@ -46,3 +46,4 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: release-builds/*
+        tagb_name: 0.0.2

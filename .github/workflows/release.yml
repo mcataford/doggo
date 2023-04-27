@@ -27,7 +27,7 @@ jobs:
         GOOS: ${{ matrix.os }}
         GOARCH: ${{ matrix.arch }}
         VERSION: ${{ steps.get_tag.outputs.tag }}
-      run: go build -ldflags "-X main.Version=$VERSION"
+      run: go build -ldflags "-X main.Version=$(echo $VERSION)"
     - name: Stash
       uses: actions/upload-artifact@v3
       with:

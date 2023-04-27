@@ -179,6 +179,7 @@ func parseArgs(args []string) Config {
 }
 
 func main() {
+	log.Println("Doggo version: ", Version)
 	config := parseArgs(os.Args)
 
 	fullTrace := parseTraceJsonFromFile(config.tracePath)

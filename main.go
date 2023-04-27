@@ -51,8 +51,10 @@ type Config struct {
 	verbosity  int
 	depthLimit int
 	help       bool
+	version    bool
 }
 
+var rVersionFlag = regexp.MustCompile("^--version$")
 var rHelpFlag = regexp.MustCompile("^--help$")
 var rVerboseFlag = regexp.MustCompile("^-(?P<verbosity>(v{1,2}))$")
 var rDepthPattern = regexp.MustCompile("--depth=(?P<depth>([1-9][0-9]*|0))")
@@ -178,6 +180,7 @@ func parseArgs(args []string) Config {
 	verbosity := 0
 	depth := 9999
 	help := false
+	version := false
 
 	verbosityMatchIndex := rVerboseFlag.SubexpIndex("verbosity")
 	for _, arg := range os.Args {
@@ -205,14 +208,17 @@ func parseArgs(args []string) Config {
 			continue
 		}
 
-		helpMatch := rHelpFlag.MatchString(arg)
-
-		if helpMatch {
+		if rHelpFlag.MatchString(arg) {
 			help = true
 		}
+
+		if rVersionFlag.MatchString(arg) {
+			version = true
+		}
+
 	}
 
-	return Config{rootOfInterest, tracePath, verbosity, depth, help}
+	return Config{rootOfInterest, tracePath, verbosity, depth, help, version}
 }
 
 func main() {
@@ -220,6 +226,11 @@ func main() {
 
 	if config.help {
 		fmt.Println(helpText)
+		return
+	}
+
+	if config.version {
+		fmt.Println(Version)
 		return
 	}
 

@@ -38,9 +38,9 @@ type Trace struct {
 }
 
 type TraceData struct {
-	Trace       Trace  `json:"trace"`
-	Orphaned    []Span `json:"orphaned"`
-	IsTruncated bool   `json:"is_truncated"`
+	Trace       Trace   `json:"trace"`
+	Orphaned    []Trace `json:"orphaned"`
+	IsTruncated bool    `json:"is_truncated"`
 }
 
 type Config struct {
@@ -94,16 +94,24 @@ func buildSpanIndexes(fullTrace TraceData) (map[string]Span, map[string][]string
 	spansById := map[string]Span{}
 	spanIdsByResourceName := map[string][]string{}
 
-	for key, value := range fullTrace.Trace.Spans {
-		resourceName := value.Resource
-		spansById[key] = value
+	tracesToProcess := []Trace{fullTrace.Trace}
 
-		spanList, ok := spanIdsByResourceName[resourceName]
+	if fullTrace.Orphaned != nil {
+		tracesToProcess = append(tracesToProcess, fullTrace.Orphaned...)
+	}
 
-		if !ok {
-			spanIdsByResourceName[resourceName] = []string{key}
-		} else {
-			spanIdsByResourceName[resourceName] = append(spanList, key)
+	for _, trace := range tracesToProcess {
+		for key, value := range trace.Spans {
+			resourceName := value.Resource
+			spansById[key] = value
+
+			spanList, ok := spanIdsByResourceName[resourceName]
+
+			if !ok {
+				spanIdsByResourceName[resourceName] = []string{key}
+			} else {
+				spanIdsByResourceName[resourceName] = append(spanList, key)
+			}
 		}
 	}
 

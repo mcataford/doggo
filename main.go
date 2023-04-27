@@ -50,10 +50,30 @@ type Config struct {
 	tracePath  string
 	verbosity  int
 	depthLimit int
+	help       bool
 }
 
+var rHelpFlag = regexp.MustCompile("^--help$")
 var rVerboseFlag = regexp.MustCompile("^-(?P<verbosity>(v{1,2}))$")
 var rDepthPattern = regexp.MustCompile("--depth=(?P<depth>([1-9][0-9]*|0))")
+
+var helpText = fmt.Sprintf(`
+Doggo (version %s)
+
+🐕🔎 Inspecting big Datadog traces in the CLI
+
+Usage:
+
+doggo <trace_path> <resource_name or partial string> [-vv] [--depth=<depthLimit>]
+
+Given a trace_path leading to tracedata json and a query (either a resource name or a partial resource name), displays the spans and children of the sections of the trace that match.
+
+By default, timing information for each span is shown.
+
+-v adds more resource-related information for each span;
+-vv adds even more resource-related information, including tags, for each span;
+--depth=<depthLimit> allows limiting how many levels down each match the display should go.
+`, Version)
 
 // Prints traces recursively with increasing ident levels.
 // More data is printed until there are no more traces available
@@ -143,10 +163,21 @@ func parseTraceJsonFromFile(path string) TraceData {
 // Parses command-line arguments to extract flags and
 // other useful contextual details.
 func parseArgs(args []string) Config {
-	rootOfInterest := os.Args[2]
-	tracePath := os.Args[1]
+	rootOfInterest := ""
+
+	if len(os.Args) >= 3 {
+		rootOfInterest = os.Args[2]
+	}
+
+	tracePath := ""
+
+	if len(os.Args) >= 2 {
+		tracePath = os.Args[1]
+	}
+
 	verbosity := 0
 	depth := 9999
+	help := false
 
 	verbosityMatchIndex := rVerboseFlag.SubexpIndex("verbosity")
 	for _, arg := range os.Args {
@@ -173,14 +204,24 @@ func parseArgs(args []string) Config {
 			depth = depthLimit
 			continue
 		}
+
+		helpMatch := rHelpFlag.MatchString(arg)
+
+		if helpMatch {
+			help = true
+		}
 	}
 
-	return Config{rootOfInterest, tracePath, verbosity, depth}
+	return Config{rootOfInterest, tracePath, verbosity, depth, help}
 }
 
 func main() {
-	log.Println("Doggo version: ", Version)
 	config := parseArgs(os.Args)
+
+	if config.help {
+		fmt.Println(helpText)
+		return
+	}
 
 	fullTrace := parseTraceJsonFromFile(config.tracePath)
 

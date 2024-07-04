@@ -1,6 +1,10 @@
 # doggo
 🐕🔎 Inspecting big Datadog traces in the CLI
 
+> # ✈️ Moved away!
+>
+> This project has moved away from Github and is now hosted [elsewhere](https://forge.karnov.club/marc/doggo).
+
 ## Why?
 
 The Datadog trace-viewing UI performance greatly degrades as the number of spans in a single trace increases and within
